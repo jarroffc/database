@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Manajemen Nomor Akses</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f2f2f2; }
+    input, button { margin: 5px; padding: 8px; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 5px 0; background: #fff; padding: 8px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h2>Tambah Nomor Akses</h2>
+  <input type="text" id="nomor" placeholder="Masukkan Nomor (628xxx...)"><br>
+  <input type="text" id="apikey" placeholder="Masukkan API Key"><br>
+  <button onclick="tambahNomor()">Tambah</button>
+
+  <h2>Daftar Nomor</h2>
+  <button onclick="fetchList()">🔄 Refresh List</button>
+  <ul id="listNomor"></ul>
+
+  <script>
+    function getBaseUrl() {
+      return window.location.origin;
+    }
+
+    function fetchList() {
+      const key = document.getElementById("apikey").value;
+      if (!key) return alert("Isi API Key dulu!");
+      fetch(`${getBaseUrl()}/listnomor?key=${key}`)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("listNomor");
+          list.innerHTML = "";
+          data.data.forEach(nomor => {
+            const li = document.createElement("li");
+            li.innerHTML = `${nomor} <button onclick="hapusNomor('${nomor}')">Hapus</button>`;
+            list.appendChild(li);
+          });
+        }).catch(err => alert("Gagal ambil list"));
+    }
+
+    function tambahNomor() {
+      const nomor = document.getElementById("nomor").value;
+      const key = document.getElementById("apikey").value;
+      if (!nomor || !key) return alert("Isi semua kolom!");
+      fetch(`${getBaseUrl()}/aksesnomor?key=${key}&nomor=${nomor}`)
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          fetchList();
+        }).catch(err => alert("Gagal tambah nomor"));
+    }
+
+    function hapusNomor(nomor) {
+      const key = document.getElementById("apikey").value;
+      if (!key) return alert("Isi API Key dulu!");
+      fetch(`${getBaseUrl()}/delnomor?key=${key}&nomor=${nomor}`)
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          fetchList();
+        }).catch(err => alert("Gagal hapus nomor"));
+    }
+  </script>
+</body>
+</html>
