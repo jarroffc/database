@@ -3,30 +3,86 @@
 <head>
   <title>Manajemen Nomor Akses</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f2f2f2; }
-    input, button { margin: 5px; padding: 8px; }
-    ul { list-style-type: none; padding: 0; }
-    li { margin: 5px 0; background: #fff; padding: 8px; border-radius: 5px; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+      max-width: 500px;
+      margin: auto;
+    }
+    h2 {
+      color: #333;
+    }
+    input, button {
+      margin: 10px 0;
+      padding: 12px;
+      width: 100%;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin: 5px 0;
+      background: #fff;
+      padding: 12px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hapus-btn {
+      background-color: #dc3545;
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: none;
+      color: white;
+    }
+    #status {
+      margin-top: 10px;
+      color: green;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h2>Tambah Nomor Akses</h2>
-  <input type="text" id="nomor" placeholder="Masukkan Nomor (628xxx...)"><br>
-  <input type="text" id="apikey" placeholder="Masukkan API Key"><br>
-  <button onclick="tambahNomor()">Tambah</button>
+  <input type="text" id="nomor" placeholder="Masukkan Nomor (628xxx...)">
+  <input type="text" id="apikey" placeholder="Masukkan API Key">
+  <button onclick="tambahNomor()">➕ Tambah</button>
 
   <h2>Daftar Nomor</h2>
   <button onclick="fetchList()">🔄 Refresh List</button>
   <ul id="listNomor"></ul>
+
+  <div id="status"></div>
 
   <script>
     function getBaseUrl() {
       return window.location.origin;
     }
 
+    function setStatus(text, isError = false) {
+      const statusDiv = document.getElementById("status");
+      statusDiv.innerText = text;
+      statusDiv.style.color = isError ? "red" : "green";
+    }
+
     function fetchList() {
       const key = document.getElementById("apikey").value;
-      if (!key) return alert("Isi API Key dulu!");
+      if (!key) return setStatus("❗ Masukkan API Key terlebih dahulu!", true);
       fetch(`${getBaseUrl()}/listnomor?key=${key}`)
         .then(res => res.json())
         .then(data => {
@@ -34,33 +90,38 @@
           list.innerHTML = "";
           data.data.forEach(nomor => {
             const li = document.createElement("li");
-            li.innerHTML = `${nomor} <button onclick="hapusNomor('${nomor}')">Hapus</button>`;
+            li.innerHTML = `
+              ${nomor}
+              <button class="hapus-btn" onclick="hapusNomor('${nomor}')">🗑️ Hapus</button>
+            `;
             list.appendChild(li);
           });
-        }).catch(err => alert("Gagal ambil list"));
+          setStatus(`✅ Berhasil memuat ${data.data.length} nomor.`);
+        }).catch(err => setStatus("⚠️ Gagal mengambil data!", true));
     }
 
     function tambahNomor() {
       const nomor = document.getElementById("nomor").value;
       const key = document.getElementById("apikey").value;
-      if (!nomor || !key) return alert("Isi semua kolom!");
+      if (!nomor || !key) return setStatus("❗ Isi semua kolom!", true);
       fetch(`${getBaseUrl()}/aksesnomor?key=${key}&nomor=${nomor}`)
         .then(res => res.json())
         .then(data => {
-          alert(data.message);
+          setStatus(data.message || "✅ Nomor berhasil ditambahkan.");
+          document.getElementById("nomor").value = "";
           fetchList();
-        }).catch(err => alert("Gagal tambah nomor"));
+        }).catch(err => setStatus("❌ Gagal menambahkan nomor!", true));
     }
 
     function hapusNomor(nomor) {
       const key = document.getElementById("apikey").value;
-      if (!key) return alert("Isi API Key dulu!");
+      if (!key) return setStatus("❗ Masukkan API Key dulu!", true);
       fetch(`${getBaseUrl()}/delnomor?key=${key}&nomor=${nomor}`)
         .then(res => res.json())
         .then(data => {
-          alert(data.message);
+          setStatus(data.message || "✅ Nomor berhasil dihapus.");
           fetchList();
-        }).catch(err => alert("Gagal hapus nomor"));
+        }).catch(err => setStatus("❌ Gagal menghapus nomor!", true));
     }
   </script>
 </body>
